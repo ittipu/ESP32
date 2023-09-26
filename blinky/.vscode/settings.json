@@ -1,0 +1,15 @@
+{
+    "C_Cpp.intelliSenseEngine": "Default",
+    "idf.adapterTargetName": "esp32",
+    "idf.customExtraPaths": "/home/kamruzzaman/esp/tools/tools/xtensa-esp-elf-gdb/11.2_20220823/xtensa-esp-elf-gdb/bin:/home/kamruzzaman/esp/tools/tools/riscv32-esp-elf-gdb/11.2_20220823/riscv32-esp-elf-gdb/bin:/home/kamruzzaman/esp/tools/tools/xtensa-esp32-elf/esp-2022r1-11.2.0/xtensa-esp32-elf/bin:/home/kamruzzaman/esp/tools/tools/xtensa-esp32s2-elf/esp-2022r1-11.2.0/xtensa-esp32s2-elf/bin:/home/kamruzzaman/esp/tools/tools/xtensa-esp32s3-elf/esp-2022r1-11.2.0/xtensa-esp32s3-elf/bin:/home/kamruzzaman/esp/tools/tools/riscv32-esp-elf/esp-2022r1-11.2.0/riscv32-esp-elf/bin:/home/kamruzzaman/esp/tools/tools/esp32ulp-elf/2.35_20220830/esp32ulp-elf/bin:/home/kamruzzaman/esp/tools/tools/openocd-esp32/v0.11.0-esp32-20220706/openocd-esp32/bin",
+    "idf.customExtraVars": "{\"OPENOCD_SCRIPTS\":\"/home/kamruzzaman/esp/tools/tools/openocd-esp32/v0.11.0-esp32-20220706/openocd-esp32/share/openocd/scripts\"}",
+    "idf.espIdfPath": "/home/kamruzzaman/esp/esp-idf",
+    "idf.openOcdConfigs": [
+        "interface/ftdi/esp32_devkitj_v1.cfg",
+        "target/esp32.cfg"
+    ],
+    "idf.port": "/dev/ttyUSB0",
+    "idf.pythonBinPath": "python",
+    "idf.toolsPath": "/home/kamruzzaman/esp/tools",
+    "idf.flashType": "UART"
+}
