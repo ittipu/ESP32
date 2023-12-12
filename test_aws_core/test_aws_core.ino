@@ -2,115 +2,103 @@
 #include <WiFiClientSecure.h>
 #include <PubSubClient.h>
 #include <ArduinoJson.h>
-#include "WiFi.h"
- 
-#include "DHT.h"
-#define DHTPIN 14     // Digital pin connected to the DHT sensor
-#define DHTTYPE DHT11   // DHT 11
- 
-#define AWS_IOT_PUBLISH_TOPIC   "esp8266/pub"
-#define AWS_IOT_SUBSCRIBE_TOPIC "esp8266/sub"
- 
-float h ;
-float t;
- 
-DHT dht(DHTPIN, DHTTYPE);
- 
-WiFiClientSecure net = WiFiClientSecure();
-PubSubClient client(net);
- 
-void connectAWS()
-{
-  WiFi.mode(WIFI_STA);
-  WiFi.begin(WIFI_SSID, WIFI_PASSWORD);
- 
-  Serial.println("Connecting to Wi-Fi");
- 
-  while (WiFi.status() != WL_CONNECTED)
-  {
-    delay(500);
-    Serial.print(".");
-  }
- 
-  // Configure WiFiClientSecure to use the AWS IoT device credentials
-  net.setCACert(AWS_CERT_CA);
-  net.setCertificate(AWS_CERT_CRT);
-  net.setPrivateKey(AWS_CERT_PRIVATE);
- 
-  // Connect to the MQTT broker on the AWS endpoint we defined earlier
+#include <WiFi.h>
+
+#define AWS_IOT_PUBLISH_TOPIC "esp32/test/pub"
+#define AWS_IOT_SUBSCRIBE_TOPIC "esp32/test/sub"
+
+
+WiFiClientSecure espClient = WiFiClientSecure();
+PubSubClient client(espClient);
+
+void connectAWS() {
+  delay(100);
   client.setServer(AWS_IOT_ENDPOINT, 8883);
- 
-  // Create a message handler
   client.setCallback(messageHandler);
- 
-  Serial.println("Connecting to AWS IOT");
- 
-  while (!client.connect(THINGNAME))
-  {
-    Serial.print(".");
-    delay(100);
+
+  while (!client.connected()) {
+    Serial.println("Connecting to AWS....");
+
+    if (client.connect(THINGNAME)) {
+      Serial.println("connected");
+    } else {
+      Serial.print("failed with state ");
+      Serial.println(client.state());
+      delay(200);
+    }
+    // Subscribe to a topic
+    client.subscribe(AWS_IOT_SUBSCRIBE_TOPIC);
   }
- 
-  if (!client.connected())
-  {
-    Serial.println("AWS IoT Timeout!");
-    return;
-  }
- 
-  // Subscribe to a topic
-  client.subscribe(AWS_IOT_SUBSCRIBE_TOPIC);
- 
-  Serial.println("AWS IoT Connected!");
 }
- 
-void publishMessage()
-{
+
+void publishMessage() {
   StaticJsonDocument<200> doc;
-  doc["humidity"] = h;
-  doc["temperature"] = t;
   char jsonBuffer[512];
-  serializeJson(doc, jsonBuffer); // print to client
- 
+  doc["millis"] = millis(); 
+  serializeJson(doc, jsonBuffer);  // print to client
   client.publish(AWS_IOT_PUBLISH_TOPIC, jsonBuffer);
 }
- 
-void messageHandler(char* topic, byte* payload, unsigned int length)
-{
+
+void messageHandler(char* topic, byte* payload, unsigned int length) {
   Serial.print("incoming: ");
   Serial.println(topic);
- 
   StaticJsonDocument<200> doc;
   deserializeJson(doc, payload);
   const char* message = doc["message"];
   Serial.println(message);
 }
- 
-void setup()
-{
+
+void setup() {
   Serial.begin(115200);
+  setup_wifi();
   connectAWS();
-  dht.begin();
 }
- 
-void loop()
-{
-  h = dht.readHumidity();
-  t = dht.readTemperature();
- 
- 
-  if (isnan(h) || isnan(t) )  // Check if any reads failed and exit early (to try again).
-  {
-    Serial.println(F("Failed to read from DHT sensor!"));
-    return;
+
+void loop() {
+  if (!client.connected()) {
+    reconnect_AWS();
   }
- 
-  Serial.print(F("Humidity: "));
-  Serial.print(h);
-  Serial.print(F("%  Temperature: "));
-  Serial.print(t);
-  Serial.println(F("°C "));
- 
   publishMessage();
+
   client.loop();
   delay(1000);
+}
+
+void reconnect_AWS() {
+  while (!client.connected()) {
+    Serial.println("Attempting AWS IoT Core connection...");
+    // Subscribe to a topic
+    if (client.connect(THINGNAME)) {
+      Serial.println("AWS IoT Connected!");
+      client.subscribe(AWS_IOT_SUBSCRIBE_TOPIC);
+    } else {
+      Serial.print("failed, rc=");
+      Serial.print(client.state());
+      Serial.println(" try again in 5 seconds");
+      delay(5000);
+    }
+  }
+}
+
+
+void setup_wifi() {
+  WiFi.mode(WIFI_STA);
+  delay(10);
+  Serial.println();
+  Serial.print("Connecting to ");
+  Serial.println(WIFI_NAME);
+  WiFi.begin(WIFI_NAME, WIFI_PASS);
+
+  while (WiFi.status() != WL_CONNECTED) {
+    delay(300);
+    Serial.print(".");
+  }
+
+  Serial.println("");
+  Serial.println("WiFi Connected");
+  Serial.print("IP address: ");
+  Serial.println(WiFi.localIP());
+  espClient.setCACert(AWS_CERT_CA);
+  espClient.setCertificate(AWS_CERT_CRT);
+  espClient.setPrivateKey(AWS_CERT_PRIVATE);
 }
